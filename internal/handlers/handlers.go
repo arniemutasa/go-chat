@@ -13,11 +13,22 @@ var views = jet.NewSet(
 	jet.InDevelopmentMode(),
 )
 
+type WebsocketConnection struct {
+	*websocket.Conn
+}
+
 // WebsocketJsonResponse - response sent back from webSocketEndpoint
 type WebsocketJsonResponse struct {
 	Action      string `json:"action"`
 	Message     string `json:"message"`
 	MessageType string `json:"message_type"`
+}
+
+type WebsocketPayload struct {
+	Action     string              `json:"action"`
+	Message    string              `json:"message"`
+	User       string              `json:"user"`
+	Connection WebsocketConnection `json:"-"`
 }
 
 var upgradeConnection = websocket.Upgrader{
