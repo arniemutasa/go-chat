@@ -125,6 +125,13 @@ func ListenToWebsocketChannel() {
 			users := GetUserList()
 			response.ConnectedUsers = users
 			BroadcastToAllUsers(response)
+
+		case "broadcast":
+			response.Action = "broadcast"
+			users := GetUserList()
+			response.ConnectedUsers = users
+			response.Message = fmt.Sprintf("<strong>%s</strong>: %s", event.User, event.Message)
+			BroadcastToAllUsers(response)
 		}
 	}
 
