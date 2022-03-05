@@ -1,12 +1,18 @@
 package handlers
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/CloudyKit/jet/v6"
 	"github.com/gorilla/websocket"
 )
+
+// Channel to handle websocket payloads
+var wsChannel = make(chan WebsocketPayload)
+
+var clients = make(map[WebsocketConnection]string)
 
 var views = jet.NewSet(
 	jet.NewOSFileSystemLoader("./html"),
@@ -60,12 +66,64 @@ func WebsocketEndpoint(w http.ResponseWriter, r *http.Request) {
 
 	response.Message = `<em><small>Connected To Server</small></em>`
 
+	conn := WebsocketConnection{Conn: ws}
+	clients[conn] = ""
+
 	err = ws.WriteJSON(response)
 
 	if err != nil {
 		log.Println(err)
 	}
 
+	go ListenForWS(&conn)
+
+}
+
+// Runs continuously and listens for payload, if payload is available it sends it to the channel
+func ListenForWS(conn *WebsocketConnection) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Println("Error", fmt.Sprintf("%v", r))
+		}
+	}()
+
+	var payload WebsocketPayload
+
+	for {
+		err := conn.ReadJSON(&payload)
+
+		if err != nil {
+			// do nothing
+		} else {
+			payload.Connection = *conn
+			wsChannel <- payload
+		}
+	}
+}
+
+// Listens to Websocket channel for any websockets and broadcasts to all connected users
+func ListenToWebsocketChannel() {
+	var response WebsocketJsonResponse
+
+	for {
+		event := <-wsChannel
+
+		response.Action = "We Here"
+		response.Message = fmt.Sprintf("some Message, and Action is %s\n", event.Action)
+		BroadcastToAllUsers(response)
+	}
+
+}
+
+func BroadcastToAllUsers(r WebsocketJsonResponse) {
+	for client := range clients {
+		err := client.WriteJSON(r)
+		if err != nil {
+			log.Println("Websocket Error")
+			_ = client.Close()
+			delete(clients, client)
+		}
+	}
 }
 
 func renderPage(w http.ResponseWriter, tmp string, data jet.VarMap) error {
