@@ -15,7 +15,14 @@
         </style>
     </head>
 <body>
-    <h1>Home Page</h1>
+
+    <div class="container">
+        <p class="lead">
+        <h2>Chat App</h2>
+        </p>
+    </div>
+    
+    <hr>
 
     <div class="container">
         <div class="row">
@@ -115,9 +122,8 @@
             }
         }
 
-        let userInput = document.getElementById("name");
         
-        userInput.addEventListener("change", function(){
+        name.addEventListener("change", function(){
             let jsonData = {};
             jsonData["action"] = "user";
             jsonData["user"] = this.value;
@@ -125,7 +131,7 @@
         });
 
 
-        document.getElementById("message").addEventListener("keydown", function(event){
+        message.addEventListener("keydown", function(event){
             if (event.code === "Enter"){
                 if(!socket){
                     console.log("No Connection")
@@ -153,8 +159,8 @@
     function sendMessage(){
         let jsonData = {};
         jsonData.action = "broadcast";
-        jsonData.user = document.getElementById("name").value;
-        jsonData.message = document.getElementById("message").value;
+        jsonData.user = name.value;
+        jsonData.message = message.value;
 
         socket.send(JSON.stringify(jsonData))
         document.getElementById("message").value = "";
